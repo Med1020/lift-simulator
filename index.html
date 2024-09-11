@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Lift Simulator</title>
+  </head>
+  <body>
+    <h2>Lift Simulator</h2>
+    <form>
+      <label>
+        Enter no. of floors
+        <input type="number" id="floor-count" min="0" placeholder="0" />
+      </label>
+      <label>
+        Enter no. of lifts
+        <input type="number" id="lift-count" min="0" placeholder="0" />
+      </label>
+      <button id="enter" type="submit">Enter</button>
+
+      <input
+        type="range"
+        id="speed"
+        name="speed"
+        min="-250"
+        max="350"
+        step="100"
+      />
+      <label for="volume">Speed</label>
+    </form>
+
+    <div class="building">
+      <img src="cloud1.png" class="cloud1" />
+      <img src="cloud2.png" class="cloud2" />
+      <table id="table">
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="grass" id="grass"></div>
+
+    <script src="index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,239 @@
+@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap");
+
+body {
+  font-family: "Pixelify Sans", sans-serif;
+  background-color: ivory;
+  margin: 0;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+h2 {
+  padding: 20px 0px 0px 20px;
+  margin: 0;
+}
+
+form {
+  padding: 25px;
+  top: 0;
+  position: sticky;
+  /* width: 100%; */
+  z-index: 1;
+  background-color: ivory;
+}
+
+.building {
+  position: relative;
+  display: block;
+  text-align: center;
+  padding-top: 100px;
+  /* background-image: url("cloud.png"); */
+  overflow-x: scroll;
+  width: 100%;
+  height: 100%;
+  background: #2aabe4;
+}
+.building::-webkit-scrollbar {
+  display: none;
+}
+.cloud1 {
+  position: absolute;
+  top: 50px;
+  height: auto;
+  z-index: 0;
+}
+.cloud2 {
+  position: absolute;
+  top: 150px;
+  height: auto;
+  z-index: 0;
+}
+
+.cloud1 {
+  left: -200px; /* Start off-screen */
+  animation: moveCloud1 60s linear infinite;
+}
+
+.cloud2 {
+  right: -200px; /* Start off-screen */
+  animation: moveCloud2 50s linear infinite;
+}
+
+table {
+  display: inline-block;
+  /* position: relative; */
+  border-spacing: 25px;
+  border: 5px solid brown;
+  border-radius: 5px 5px 0px 0px;
+  /* background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(121,9,26,1) 35%, rgba(240,41,55,1) 100%);
+   */
+  background-image: url("wall.jpg");
+  background-repeat: repeat;
+  margin: auto;
+  height: 100%;
+  z-index: 1;
+}
+
+td {
+  border: 1px solid black;
+  height: 100px;
+  width: 50px;
+  margin: 0px 25px;
+  padding: 0;
+}
+td.border {
+  height: 5px;
+  border: 0;
+}
+
+.grass {
+  /* border-top: 1p x solid black; */
+  height: 50px;
+  background-image: linear-gradient(#a8bd06, #3f9b0b);
+  min-width: 100%;
+}
+
+.border {
+  height: 1px;
+  background: rgb(111, 26, 26);
+}
+
+button {
+  padding: 2px 15px;
+  background-color: rgb(95, 56, 235);
+  color: white;
+  outline-color: none;
+  cursor: pointer;
+  border-radius: 5px;
+  outline: none;
+}
+button:hover {
+  background-color: rgb(123, 89, 247);
+}
+
+.clicked {
+  /* background-color: #faf49e; */
+  background-image: linear-gradient(#faf49e, #d4af37);
+  box-shadow: 0px 0px 10px 1px #ffd700;
+  border: #d4af37;
+}
+
+.buttonCol {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.floor-number {
+  font-size: 24px;
+  margin: 0;
+  padding-bottom: 5px;
+  color: white;
+}
+
+.floor {
+  display: flex;
+  justify-content: space-between;
+}
+.lift {
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.lift-in-floor {
+  /* background-color: gray; */
+  background: linear-gradient(
+    120deg,
+    rgba(111, 111, 111, 1) 0%,
+    rgba(189, 189, 189, 1) 86%
+  );
+}
+.door-container {
+  display: flex;
+  justify-content: center;
+}
+
+.doors .close-door {
+  width: 1px;
+}
+
+.doors.open-door {
+  width: 100%;
+}
+
+.doors {
+  height: inherit;
+  width: 1px;
+  background-color: white;
+  transition: width 2.5s ease;
+}
+
+input {
+  padding: 5px;
+}
+
+.lift-up {
+  animation: goUp 1s linear;
+  transform-origin: top;
+}
+
+.lift-comes-up {
+  animation: goUp 1s linear;
+  transform-origin: bottom;
+}
+
+.lift-down {
+  animation: goDown 1s linear;
+  transform-origin: bottom;
+}
+
+.zoom {
+  zoom: 0.4;
+}
+
+.zoom .cloud1,
+.cloud2 {
+  width: 15rem;
+}
+
+@keyframes goUp {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes goDown {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes moveCloud1 {
+  0% {
+    left: -200px; /* Start off-screen */
+  }
+  100% {
+    left: calc(100% + 200px); /* Move off the right side of the screen */
+  }
+}
+
+@keyframes moveCloud2 {
+  0% {
+    right: -200px; /* Start off-screen */
+  }
+  100% {
+    right: calc(100% + 200px); /* Move off the left side of the screen */
+  }
+}
