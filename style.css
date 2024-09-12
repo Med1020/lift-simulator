@@ -4,6 +4,7 @@ body {
   font-family: "Pixelify Sans", sans-serif;
   background-color: ivory;
   margin: 0;
+  overflow-x: hidden;
 }
 
 input::-webkit-outer-spin-button,
@@ -16,8 +17,12 @@ h2 {
   margin: 0;
 }
 
+li {
+  list-style: armenian;
+}
+
 form {
-  padding: 25px;
+  padding: 0px 0px 25px 25px;
   top: 0;
   position: sticky;
   /* width: 100%; */
@@ -70,7 +75,7 @@ table {
   border-radius: 5px 5px 0px 0px;
   /* background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(121,9,26,1) 35%, rgba(240,41,55,1) 100%);
    */
-  background-image: url("wall.jpg");
+  background-image: url("./assets/wall.jpg");
   background-repeat: repeat;
   margin: auto;
   height: 100%;
@@ -174,8 +179,15 @@ button:hover {
   transition: width 2.5s ease;
 }
 
+form {
+  width: 100vw;
+  display: flex;
+  justify-content: start;
+}
+
 input {
   padding: 5px;
+  margin-right: 2rem;
 }
 
 .lift-up {
@@ -184,30 +196,61 @@ input {
 }
 
 .lift-comes-up {
-  animation: goUp 1s linear;
+  animation: comeUp 1s linear;
   transform-origin: bottom;
 }
 
+.lift-comes-goes-up {
+  animation: comeGoUp 1.5s linear;
+}
 .lift-down {
   animation: goDown 1s linear;
   transform-origin: bottom;
+}
+
+.lift-comes-down {
+  animation: comeDown 1s linear;
+  transform-origin: top;
 }
 
 .zoom {
   zoom: 0.4;
 }
 
-.zoom .cloud1,
-.cloud2 {
-  width: 15rem;
-}
-
 @keyframes goUp {
   from {
     transform: scaleY(1);
   }
+
   to {
     transform: scaleY(0);
+  }
+}
+@keyframes comeUp {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes comeGoUp {
+  0% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  40% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  60% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: top;
   }
 }
 
@@ -217,6 +260,15 @@ input {
   }
   to {
     transform: scaleY(0);
+  }
+}
+
+@keyframes comeDown {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
   }
 }
 

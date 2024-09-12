@@ -8,6 +8,18 @@
   </head>
   <body>
     <h2>Lift Simulator</h2>
+    <ul>
+      <li>
+        Play with this lift simulator by creating any number of floors and
+        lifts.
+      </li>
+      <li>
+        Click on the buttons of different floors to see the simulation in
+        action.
+      </li>
+      <li>Click on all floors if you like, much like we did when were kids!</li>
+    </ul>
+
     <form>
       <label>
         Enter no. of floors
@@ -18,21 +30,11 @@
         <input type="number" id="lift-count" min="0" placeholder="0" />
       </label>
       <button id="enter" type="submit">Enter</button>
-
-      <input
-        type="range"
-        id="speed"
-        name="speed"
-        min="-250"
-        max="350"
-        step="100"
-      />
-      <label for="volume">Speed</label>
     </form>
 
     <div class="building">
-      <img src="cloud1.png" class="cloud1" />
-      <img src="cloud2.png" class="cloud2" />
+      <img src="./assets/cloud1.png" class="cloud1" />
+      <img src="./assets/cloud2.png" class="cloud2" />
       <table id="table">
         <tbody></tbody>
       </table>

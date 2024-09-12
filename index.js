@@ -2,20 +2,21 @@ const floorCount = document.getElementById("floor-count");
 const liftCount = document.getElementById("lift-count");
 const enterBtn = document.getElementById("enter");
 let table = document.querySelector("#table tbody");
-let speed = document.getElementById("speed");
 const grass = document.getElementById("grass");
 const building = document.querySelector(".building");
-let liftSpeed = speed;
 
-let liftPosition = Array(Number(liftCount.value)).fill(0);
+let allLifts = null; //gets set to nodeslist with lift-container class
+let liftPosition = Array.from({ length: Number(liftCount.value) }, () => ({
+  position: 0,
+  isMoving: false,
+}));
+
 const setLiftPosition = () => {
-  liftPosition = Array(Number(liftCount.value)).fill(0);
+  liftPosition = Array.from({ length: Number(liftCount.value) }, () => ({
+    position: 0,
+    isMoving: false,
+  }));
 };
-
-speed.addEventListener("change", (e) => {
-  liftSpeed = e.target.value;
-  console.log(liftSpeed);
-});
 
 floorCount.addEventListener("keypress", (e) => {
   if (e.key === "enter") {
@@ -24,25 +25,30 @@ floorCount.addEventListener("keypress", (e) => {
     setLiftPosition();
   }
 });
-floorCount.addEventListener("change", (e) => {
+
+floorCount.addEventListener("input", (e) => {
   e.preventDefault();
+
   if (+liftCount.value > 10 || +floorCount.value > 10) {
     building.classList.add("zoom");
   } else {
     building.classList.remove("zoom");
   }
   enterBtn.click();
+  getAllLifts();
   setLiftPosition();
 });
 
-liftCount.addEventListener("change", (e) => {
+liftCount.addEventListener("input", (e) => {
   e.preventDefault();
   if (+liftCount.value > 10 || +floorCount.value > 10) {
     building.classList.add("zoom");
   }
   enterBtn.click();
+  getAllLifts();
   setLiftPosition();
 });
+
 enterBtn.addEventListener("click", (e) => {
   e.preventDefault();
   createBuilding();
@@ -50,11 +56,36 @@ enterBtn.addEventListener("click", (e) => {
 });
 
 const closestLift = (arr) => {
-  let closest = [arr[0], 0]; //closest, index
+  // console.log("diff arr", arr);
+  let closest = [arr[0]["position"], 0]; //closest, index
+  let found = false; // flag to find the first non-moving lift
+
+  // console.log("checking ismoving", closest);
   arr.forEach((a, ind) => {
-    closest = Math.abs(closest[0]) > Math.abs(a) ? [a, ind] : closest;
+    if (!a["isMoving"]) {
+      if (!found || Math.abs(closest[0]) > Math.abs(a["position"])) {
+        closest = [a["position"], ind];
+        found = true;
+      }
+    }
   });
-  return closest;
+  // console.log("closest", closest);
+  return found ? closest : null;
+};
+
+const getMatchingButton = (floor) => {
+  var buttons = document.querySelectorAll(".clicked");
+  let matchingBtn = null;
+  buttons.forEach((button) => {
+    if (+button.value === floor) {
+      matchingBtn = button;
+    }
+  });
+  return matchingBtn;
+};
+
+const getAllLifts = () => {
+  allLifts = document.querySelectorAll(".door-container");
 };
 
 const animateLiftGoingUp = (
@@ -64,31 +95,53 @@ const animateLiftGoingUp = (
   index,
   col,
   matchingButton,
-  cell
+  cell,
+  floorWithLift
 ) => {
   return new Promise((resolve) => {
-    liftPosition[index] = row;
-    if (+row === Math.abs(liftPosition[index]) && +col === index) {
-      liftDiv.classList.add("lift-in-floor");
-      liftDiv.classList.add("lift-up");
-      setTimeout(() => {
-        liftDiv.classList.remove("lift-in-floor");
-        liftDiv.classList.remove("lift-up");
-        resolve(); // Resolve the promise when the lift-up animation is done
-      }, 1000); // Duration of the lift-up animation
+    liftPosition[index]["position"] = row;
+    liftPosition[index]["isMoving"] = true;
+
+    if (
+      +row === Math.abs(liftPosition[index]["position"]) &&
+      +col === index &&
+      row !== floor
+    ) {
+      if (floorWithLift) {
+        // liftDiv.classList.add("lift-in-floor");
+        liftDiv.classList.add("lift-up");
+        setTimeout(() => {
+          liftDiv.classList.remove("lift-in-floor");
+          liftDiv.classList.remove("lift-up");
+          resolve(); // Resolve the promise when the lift-up animation is done
+        }, 1000); // Duration of the lift-up animation
+      } else {
+        liftDiv.classList.add("lift-in-floor");
+        liftDiv.classList.add("lift-comes-goes-up");
+        setTimeout(() => {
+          liftDiv.classList.remove("lift-in-floor");
+          liftDiv.classList.remove("lift-comes-goes-up");
+          resolve(); // Resolve the promise when the lift-up animation is done
+        }, 1500); // Duration of the lift-up animation
+      }
     } else {
       resolve(); // Resolve immediately if row === floor
     }
   }).then(() => {
     if (row === floor) {
-      const doorDiv = liftDiv.children[0];
-      matchingButton.classList.remove("clicked");
+      liftDiv.classList.add("lift-comes-up");
       liftDiv.classList.add("lift-in-floor");
-      doorDiv.classList.add("open-door");
       setTimeout(() => {
-        doorDiv.classList.remove("open-door");
-        doorDiv.classList.add("close-door");
-      }, 2000); // Duration of the door open animation
+        const doorDiv = liftDiv.children[0];
+        matchingButton.classList.remove("clicked");
+        doorDiv.classList.add("open-door");
+        setTimeout(() => {
+          liftDiv.classList.remove("lift-comes-up");
+          doorDiv.classList.remove("open-door");
+          doorDiv.classList.add("close-door");
+          liftPosition[index]["isMoving"] = false;
+        }, 2000); // Duration of the door open animation
+      }, 1000);
     }
   });
 };
@@ -102,15 +155,28 @@ const animateLiftGoingDown = (
   matchingButton
 ) => {
   return new Promise((resolve) => {
-    console.log(row, col);
-    liftPosition[index] = row;
-    if (+row === Math.abs(liftPosition[index]) && +col === index) {
-      liftDiv.classList.add("lift-down");
-      setTimeout(() => {
-        liftDiv.classList.remove("lift-in-floor");
-        liftDiv.classList.remove("lift-down");
-        resolve(); // Resolve the promise when the lift-down animation is done
-      }, 1000); // Duration of the lift-down animation
+    // console.log(row, col);
+    liftPosition[index]["position"] = row;
+    liftPosition[index]["isMoving"] = true;
+
+    if (+row === Math.abs(liftPosition[index]["position"]) && +col === index) {
+      if (+row !== floor) {
+        liftDiv.classList.add("lift-down");
+        liftDiv.classList.add("lift-in-floor");
+        setTimeout(() => {
+          liftDiv.classList.remove("lift-in-floor");
+          liftDiv.classList.remove("lift-down");
+          resolve(); // Resolve the promise when the lift-down animation is done
+        }, 1000); // Duration of the lift-down animation
+      } else {
+        liftDiv.classList.add("lift-comes-down");
+        liftDiv.classList.add("lift-in-floor");
+        setTimeout(() => {
+          liftDiv.classList.remove("lift-in-floor");
+          liftDiv.classList.remove("lift-comes-down");
+          resolve(); // Resolve the promise when the lift-down animation is done
+        }, 1000); // Duration of the lift-down animation
+      }
     } else {
       resolve(); // Resolve immediately if row === floor
     }
@@ -123,6 +189,7 @@ const animateLiftGoingDown = (
       setTimeout(() => {
         doorDiv.classList.remove("open-door");
         doorDiv.classList.add("close-door");
+        liftPosition[index]["isMoving"] = false;
       }, 2000); // Duration of the door open animation
     }
   });
@@ -130,32 +197,26 @@ const animateLiftGoingDown = (
 
 const getLiftToFloor = (floor) => {
   floor = Number(floor);
-  const diff = liftPosition.map((pos) => pos - floor);
-  console.log("diff", diff);
-  console.log("liftposition", liftPosition);
+  const diff = liftPosition.map((lp) => {
+    return { ...lp, position: lp.position - floor };
+  });
+  // console.log("diff", diff);
+  // console.log("liftposition", liftPosition);
   const [closest, index] = closestLift(diff);
-  console.log(closest, index);
+  // console.log(closest, index);
+
+  let matchingButton = getMatchingButton(floor); //get the button pressed to style it
+
   if (closest > 0) {
-    //add class that sends lift down based on key of td
-    var cellsToAddDownClassTo = document.querySelectorAll(".door-container");
-    var buttons = document.querySelectorAll(".clicked");
-    let matchingButton = null;
-    buttons.forEach((button) => {
-      if (+button.value === floor) {
-        matchingButton = button;
-      }
-    });
-    const liftFloor = liftPosition[index];
+    //lift needs to go down
+    var cellsToAddDownClassTo = allLifts;
+    const liftFloor = liftPosition[index]["position"];
     for (let i = 0; i <= cellsToAddDownClassTo.length - 1; i++) {
       let cell = cellsToAddDownClassTo[i];
       const pos = cell.getAttribute("Id");
       let [row, col] = JSON.parse(pos);
       (row = Number(row)), (col = Number(col));
-      if (
-        col === index &&
-        row <= Math.abs(liftPosition[index]) &&
-        row >= floor
-      ) {
+      if (col === index && row <= Math.abs(liftFloor) && row >= floor) {
         const liftDiv = cell.children[0];
         setTimeout(() => {
           animateLiftGoingDown(liftDiv, row, floor, index, col, matchingButton);
@@ -163,29 +224,24 @@ const getLiftToFloor = (floor) => {
       }
     }
   } else if (closest < 0) {
-    //add class to send lift up based on key of td
+    //lift needs to go up
     //closest is the no. of rows I have to move & index is the column I have to move in
-
-    var cellsToAddUPClassTo = document.querySelectorAll(".door-container");
-    var buttons = document.querySelectorAll(".clicked");
-    let matchingButton = null;
-    buttons.forEach((button) => {
-      if (+button.value === floor) {
-        matchingButton = button;
-      }
-    });
+    var cellsToAddUPClassTo = allLifts;
+    let floorWithLift = true;
     for (let i = cellsToAddUPClassTo.length - 1; i >= 0; i--) {
       let cell = cellsToAddUPClassTo[i];
       const pos = cell.getAttribute("Id");
       let [row, col] = JSON.parse(pos);
 
       (row = Number(row)), (col = Number(col));
+
       if (
         col === index &&
         row <= floor &&
-        row >= Math.abs(liftPosition[index])
+        row >= Math.abs(liftPosition[index]["position"])
       ) {
         const liftDiv = cell.children[0];
+
         setTimeout(() => {
           animateLiftGoingUp(
             liftDiv,
@@ -194,22 +250,18 @@ const getLiftToFloor = (floor) => {
             index,
             col,
             matchingButton,
-            cell
+            cell,
+            floorWithLift
           );
+          if (floorWithLift) {
+            floorWithLift = false;
+          }
         }, row * 1000);
       }
     }
   }
   if (closest === 0) {
-    var cellsToAddOpenDoorTo = document.querySelectorAll(".door-container");
-    var buttons = document.querySelectorAll(".clicked");
-    let matchingButton = null;
-    buttons.forEach((button) => {
-      console.log(typeof button.value);
-      if (+button.value === floor) {
-        matchingButton = button;
-      }
-    });
+    var cellsToAddOpenDoorTo = allLifts;
     cellsToAddOpenDoorTo.forEach((cell, i) => {
       const pos = cell.getAttribute("Id");
       const [row, col] = JSON.parse(pos);
