@@ -6,10 +6,13 @@ const grass = document.getElementById("grass");
 const building = document.querySelector(".building");
 
 let allLifts = null; //gets set to nodeslist with lift-container class
+const liftMap = new Map();
 let liftPosition = Array.from({ length: Number(liftCount.value) }, () => ({
   position: 0,
   isMoving: false,
 }));
+let liftRequests = [];
+let liftRequestDirections = {};
 
 const setLiftPosition = () => {
   liftPosition = Array.from({ length: Number(liftCount.value) }, () => ({
@@ -18,13 +21,21 @@ const setLiftPosition = () => {
   }));
 };
 
-floorCount.addEventListener("keypress", (e) => {
-  if (e.key === "enter") {
-    e.preventDefault();
-    enterBtn.click();
-    setLiftPosition();
-  }
-});
+function initializeLiftMap(allLifts) {
+  allLifts.forEach((cell) => {
+    const pos = JSON.parse(cell.getAttribute("Id"));
+    const key = `${pos[0]},${pos[1]}`;
+    liftMap.set(key, cell);
+  });
+}
+
+// floorCount.addEventListener("keypress", (e) => {
+//   if (e.key === "enter") {
+//     e.preventDefault();
+//     // enterBtn.click();
+//     setLiftPosition();
+//   }
+// });
 
 floorCount.addEventListener("input", (e) => {
   e.preventDefault();
@@ -35,8 +46,8 @@ floorCount.addEventListener("input", (e) => {
     building.classList.remove("zoom");
   }
   enterBtn.click();
-  getAllLifts();
-  setLiftPosition();
+  // getAllLifts();
+  // setLiftPosition();
 });
 
 liftCount.addEventListener("input", (e) => {
@@ -45,32 +56,43 @@ liftCount.addEventListener("input", (e) => {
     building.classList.add("zoom");
   }
   enterBtn.click();
-  getAllLifts();
-  setLiftPosition();
+  // getAllLifts();
+  // setLiftPosition();
 });
 
 enterBtn.addEventListener("click", (e) => {
   e.preventDefault();
   createBuilding();
+  getAllLifts();
   setLiftPosition();
 });
 
-const closestLift = (arr) => {
-  // console.log("diff arr", arr);
-  let closest = [arr[0]["position"], 0]; //closest, index
-  let found = false; // flag to find the first non-moving lift
+// const closestLift = (arr) => {
+//   // console.log("diff arr", arr);
+//   let closest = [arr[0]["position"], 0]; //closest, index
+//   let found = false; // flag to find the first non-moving lift
 
-  // console.log("checking ismoving", closest);
-  arr.forEach((a, ind) => {
-    if (!a["isMoving"]) {
-      if (!found || Math.abs(closest[0]) > Math.abs(a["position"])) {
-        closest = [a["position"], ind];
-        found = true;
-      }
-    }
-  });
-  // console.log("closest", closest);
-  return found ? closest : null;
+//   // console.log("checking ismoving", closest);
+//   arr.forEach((a, ind) => {
+//     if (!a["isMoving"]) {
+//       if (!found || Math.abs(closest[0]) > Math.abs(a["position"])) {
+//         closest = [a["position"], ind];
+//         found = true;
+//       }
+//     }
+//   });
+//   // console.log("closest", closest);
+//   return found ? closest : null;
+// };
+
+const findClosestLift = (floor) => {
+  return liftPosition.reduce(
+    (closest, lp, index) => {
+      const diff = Math.abs(lp.position - floor);
+      return diff < closest.diff && !lp.isMoving ? { diff, index } : closest;
+    },
+    { diff: Infinity, index: -1 }
+  );
 };
 
 const getMatchingButton = (floor) => {
@@ -86,6 +108,7 @@ const getMatchingButton = (floor) => {
 
 const getAllLifts = () => {
   allLifts = document.querySelectorAll(".door-container");
+  initializeLiftMap(allLifts);
 };
 
 const animateLiftGoingUp = (
@@ -96,7 +119,8 @@ const animateLiftGoingUp = (
   col,
   matchingButton,
   cell,
-  floorWithLift
+  floorWithLift,
+  direction
 ) => {
   return new Promise((resolve) => {
     liftPosition[index]["position"] = row;
@@ -142,6 +166,10 @@ const animateLiftGoingUp = (
           liftPosition[index]["isMoving"] = false;
         }, 2000); // Duration of the door open animation
       }, 1000);
+      liftRequestDirections[floor] = liftRequestDirections[floor]
+        ? liftRequestDirections[floor].filter((dir) => dir !== direction)
+        : [];
+      // console.log(liftRequestDirections);
     }
   });
 };
@@ -152,7 +180,8 @@ const animateLiftGoingDown = (
   floor,
   index,
   col,
-  matchingButton
+  matchingButton,
+  direction
 ) => {
   return new Promise((resolve) => {
     // console.log(row, col);
@@ -191,96 +220,203 @@ const animateLiftGoingDown = (
         doorDiv.classList.add("close-door");
         liftPosition[index]["isMoving"] = false;
       }, 2000); // Duration of the door open animation
+      liftRequestDirections[floor] = liftRequestDirections[floor]
+        ? liftRequestDirections[floor].filter((dir) => dir !== direction)
+        : [];
+      // console.log(liftRequestDirections);
     }
   });
 };
 
-const getLiftToFloor = (floor) => {
+const getLiftToFloor = (floor, direction) => {
   floor = Number(floor);
-  const diff = liftPosition.map((lp) => {
-    return { ...lp, position: lp.position - floor };
-  });
-  // console.log("diff", diff);
-  // console.log("liftposition", liftPosition);
-  const [closest, index] = closestLift(diff);
-  // console.log(closest, index);
 
+  if (
+    !liftRequestDirections[floor] ||
+    liftRequestDirections[floor].length === 0
+  ) {
+    liftRequestDirections[floor] = [];
+  }
+
+  if (!liftRequestDirections[floor].includes(direction)) {
+    liftRequestDirections[floor].push(direction);
+    // console.log(liftRequestDirections);
+    liftRequests.push(floor);
+    processLiftRequests(direction);
+  }
+  // else {
+  //   processLiftRequests(direction);
+  // }
+};
+// const diff = liftPosition.map((lp) => {
+//   return { ...lp, position: lp.position - floor };
+// });
+// const [closest, index] = closestLift(diff);
+// console.log(closest, index);
+
+const processLiftRequests = (direction) => {
+  if (liftRequests.length === 0) return;
+  const floor = liftRequests[0];
+  const availableLifts = liftPosition.filter((lp) => !lp.isMoving);
+  if (availableLifts.length === 0) {
+    // All lifts are moving, try again later
+    setTimeout(processLiftRequests, 1000);
+    return;
+  }
+
+  const { diff, index } = findClosestLift(floor);
   let matchingButton = getMatchingButton(floor); //get the button pressed to style it
 
-  if (closest > 0) {
+  const liftFloor = liftPosition[index].position;
+  const isGoingDown = liftFloor > floor;
+  if (diff === 0) {
+    const key = `${floor},${index}`;
+    const cell = liftMap.get(key);
+    if (cell) {
+      const liftDiv = cell.children[0];
+      const doorDiv = liftDiv.children[0];
+      if (matchingButton) {
+        matchingButton.classList.remove("clicked");
+      }
+      doorDiv.classList.add("open-door");
+      setTimeout(() => {
+        doorDiv.classList.remove("open-door");
+        doorDiv.classList.add("close-door");
+      }, 2500);
+      doorDiv.classList.remove("close-door");
+      liftRequestDirections[floor] = liftRequestDirections[floor].filter(
+        (dir) => dir !== direction
+      );
+    }
+  } else if (isGoingDown) {
     //lift needs to go down
-    var cellsToAddDownClassTo = allLifts;
-    const liftFloor = liftPosition[index]["position"];
-    for (let i = 0; i <= cellsToAddDownClassTo.length - 1; i++) {
-      let cell = cellsToAddDownClassTo[i];
-      const pos = cell.getAttribute("Id");
-      let [row, col] = JSON.parse(pos);
-      (row = Number(row)), (col = Number(col));
-      if (col === index && row <= Math.abs(liftFloor) && row >= floor) {
+    for (let row = liftFloor; row >= floor; row--) {
+      const key = `${row},${index}`;
+      const cell = liftMap.get(key);
+      if (cell) {
         const liftDiv = cell.children[0];
         setTimeout(() => {
-          animateLiftGoingDown(liftDiv, row, floor, index, col, matchingButton);
-        }, Math.abs(row - liftFloor) * 1000);
+          animateLiftGoingDown(
+            liftDiv,
+            row,
+            floor,
+            index,
+            index,
+            matchingButton,
+            direction
+          );
+        }, (liftFloor - row) * 1000);
       }
     }
-  } else if (closest < 0) {
-    //lift needs to go up
-    //closest is the no. of rows I have to move & index is the column I have to move in
-    var cellsToAddUPClassTo = allLifts;
+  } else {
+    // Lift needs to go up
     let floorWithLift = true;
-    for (let i = cellsToAddUPClassTo.length - 1; i >= 0; i--) {
-      let cell = cellsToAddUPClassTo[i];
-      const pos = cell.getAttribute("Id");
-      let [row, col] = JSON.parse(pos);
-
-      (row = Number(row)), (col = Number(col));
-
-      if (
-        col === index &&
-        row <= floor &&
-        row >= Math.abs(liftPosition[index]["position"])
-      ) {
+    for (let row = liftFloor; row <= floor; row++) {
+      const key = `${row},${index}`;
+      const cell = liftMap.get(key);
+      if (cell) {
         const liftDiv = cell.children[0];
-
         setTimeout(() => {
           animateLiftGoingUp(
             liftDiv,
             row,
             floor,
             index,
-            col,
+            index,
             matchingButton,
             cell,
-            floorWithLift
+            floorWithLift,
+            direction
           );
           if (floorWithLift) {
             floorWithLift = false;
           }
-        }, row * 1000);
+        }, (row - liftFloor) * 1000);
       }
     }
   }
-  if (closest === 0) {
-    var cellsToAddOpenDoorTo = allLifts;
-    cellsToAddOpenDoorTo.forEach((cell, i) => {
-      const pos = cell.getAttribute("Id");
-      const [row, col] = JSON.parse(pos);
-      if (+col === Math.abs(index) && row === floor) {
-        const liftDiv = cell.children[0];
-        const doorDiv = liftDiv.children[0];
+  // liftPosition[index].position = floor;
+  // liftPosition[index].isMoving = true;
+  liftRequests.shift();
 
-        if (matchingButton) {
-          matchingButton.classList.remove("clicked");
-        }
-        doorDiv.classList.add("open-door");
-        setTimeout(() => {
-          doorDiv.classList.remove("open-door");
-          doorDiv.classList.add("close-door");
-        }, 2500);
-        doorDiv.classList.remove("close-door");
-      }
-    });
-  }
+  // liftRequestDirections = liftRequestDirections[floor].filter(
+  //   (dir) => dir !== direction
+  // );
+
+  // if (closest > 0) {
+  //   //lift needs to go down
+  //   var cellsToAddDownClassTo = allLifts;
+  //   const liftFloor = liftPosition[index]["position"];
+  //   for (let i = 0; i <= cellsToAddDownClassTo.length - 1; i++) {
+  //     let cell = cellsToAddDownClassTo[i];
+  //     const pos = cell.getAttribute("Id");
+  //     let [row, col] = JSON.parse(pos);
+  //     (row = Number(row)), (col = Number(col));
+  //     if (col === index && row <= Math.abs(liftFloor) && row >= floor) {
+  //       const liftDiv = cell.children[0];
+  //       setTimeout(() => {
+  //         animateLiftGoingDown(liftDiv, row, floor, index, col, matchingButton);
+  //       }, Math.abs(row - liftFloor) * 1000);
+  //     }
+  //   }
+  // } else if (closest < 0) {
+  //   //lift needs to go up
+  //   //closest is the no. of rows I have to move & index is the column I have to move in
+  //   var cellsToAddUPClassTo = allLifts;
+  //   let floorWithLift = true;
+  //   for (let i = cellsToAddUPClassTo.length - 1; i >= 0; i--) {
+  //     let cell = cellsToAddUPClassTo[i];
+  //     const pos = cell.getAttribute("Id");
+  //     let [row, col] = JSON.parse(pos);
+
+  //     (row = Number(row)), (col = Number(col));
+
+  //     if (
+  //       col === index &&
+  //       row <= floor &&
+  //       row >= Math.abs(liftPosition[index]["position"])
+  //     ) {
+  //       const liftDiv = cell.children[0];
+
+  //       setTimeout(() => {
+  //         animateLiftGoingUp(
+  //           liftDiv,
+  //           row,
+  //           floor,
+  //           index,
+  //           col,
+  //           matchingButton,
+  //           cell,
+  //           floorWithLift
+  //         );
+  //         if (floorWithLift) {
+  //           floorWithLift = false;
+  //         }
+  //       }, row * 1000);
+  //     }
+  //   }
+  // }
+  // if (closest === 0) {
+  //   var cellsToAddOpenDoorTo = allLifts;
+  //   cellsToAddOpenDoorTo.forEach((cell, i) => {
+  //     const pos = cell.getAttribute("Id");
+  //     const [row, col] = JSON.parse(pos);
+  //     if (+col === Math.abs(index) && row === floor) {
+  //       const liftDiv = cell.children[0];
+  //       const doorDiv = liftDiv.children[0];
+
+  //       if (matchingButton) {
+  //         matchingButton.classList.remove("clicked");
+  //       }
+  //       doorDiv.classList.add("open-door");
+  //       setTimeout(() => {
+  //         doorDiv.classList.remove("open-door");
+  //         doorDiv.classList.add("close-door");
+  //       }, 2500);
+  //       doorDiv.classList.remove("close-door");
+  //     }
+  //   });
+  // }
 };
 
 const createUpDownButton = (tr, i) => {
@@ -300,7 +436,7 @@ const createUpDownButton = (tr, i) => {
     td.append(up);
     up.addEventListener("click", () => {
       up.classList.add("clicked");
-      getLiftToFloor(up.value);
+      getLiftToFloor(up.value, "up");
     });
   }
   if (i > 0 && liftCount.value > 0) {
@@ -312,7 +448,7 @@ const createUpDownButton = (tr, i) => {
     td.append(down);
     down.addEventListener("click", () => {
       down.classList.add("clicked");
-      getLiftToFloor(down.value);
+      getLiftToFloor(down.value, "down");
     });
   }
   tr.append(td);
