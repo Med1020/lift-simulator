@@ -95,11 +95,12 @@ const findClosestLift = (floor) => {
   );
 };
 
-const getMatchingButton = (floor) => {
+const getMatchingButton = (floor, direction) => {
   var buttons = document.querySelectorAll(".clicked");
   let matchingBtn = null;
   buttons.forEach((button) => {
-    if (+button.value === floor) {
+    let btnDir = button.getAttribute("class");
+    if (+button.value === floor && btnDir.split(" ")[0] === direction) {
       matchingBtn = button;
     }
   });
@@ -255,18 +256,19 @@ const getLiftToFloor = (floor, direction) => {
 // console.log(closest, index);
 
 const processLiftRequests = (direction) => {
+  console.log(direction);
   if (liftRequests.length === 0) return;
   const floor = liftRequests[0];
   const availableLifts = liftPosition.filter((lp) => !lp.isMoving);
   if (availableLifts.length === 0) {
     // All lifts are moving, try again later
-    setTimeout(processLiftRequests, 1000);
+    setTimeout(() => processLiftRequests(direction), 1000);
     return;
   }
 
   const { diff, index } = findClosestLift(floor);
-  let matchingButton = getMatchingButton(floor); //get the button pressed to style it
-
+  let matchingButton = getMatchingButton(floor, direction); //get the button pressed to style it
+  // console.log(matchingButton);
   const liftFloor = liftPosition[index].position;
   const isGoingDown = liftFloor > floor;
   if (diff === 0) {
