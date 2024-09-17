@@ -90,7 +90,8 @@ const getMatchingButton = (floor, direction) => {
   buttons.forEach((button) => {
     let btnDir = button.getAttribute("class");
     // console.log(btnDir, direction);
-    if (+button.value === floor && btnDir.split(" ")[0] === direction) {
+    // if (+button.value === floor && btnDir.split(" ")[0] === direction) {
+    if (+button.value === floor) {
       matchingBtn.push(button);
     }
   });
