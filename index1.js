@@ -231,9 +231,10 @@ const animateLiftGoingDown = (
 
 const getLiftToFloor = (floor, direction) => {
   floor = Number(floor);
-
+  // console.log(liftRequestDirections[floor]);
   if (
-    !Array.isArray(liftRequestDirections[floor])
+    !Array.isArray(liftRequestDirections[floor]) ||
+    !liftRequestDirections[floor]
     // ||
     // liftRequestDirections[floor].length === 0
   ) {
@@ -255,7 +256,7 @@ const processLiftRequests = (direction) => {
   if (liftRequests.length === 0) return;
   const floor = liftRequests[0];
   const availableLifts = liftPosition.filter((lp) => !lp.isMoving);
-  // console.log("availableLifts", availableLifts);
+
   if (availableLifts.length === 0) {
     // All lifts are moving, try again later
     setTimeout(() => processLiftRequests(direction), 1000);
@@ -263,11 +264,11 @@ const processLiftRequests = (direction) => {
   }
 
   // console.log(findClosestLift(floor));
-
   const [diff, index] = findClosestLift(floor);
+
   if (liftPosition[index].isOperatingDoor) {
     setTimeout(() => {
-      //   console.log(direction);
+      // console.log(direction);
       processLiftRequests(direction);
     }, 1000);
     return;
@@ -275,38 +276,39 @@ const processLiftRequests = (direction) => {
 
   // console.log("diff,index", diff, index);
   let matchingButton = getMatchingButton(floor, direction); //get the button pressed to style it
-  // console.log(matchingButton);
   const liftFloor = liftPosition[index].position;
-  const isGoingDown = liftFloor > floor;
+  // console.log(liftRequests);
 
   if (diff === 0) {
+    //   // console.log(liftRequestDirections);
     const key = `${floor},${index}`;
     const cell = liftMap.get(key);
-
     if (cell) {
       // console.log("inside", cell);
       const liftDiv = cell.children[0];
       const doorDiv = liftDiv.children[0];
       console.log(direction, matchingButton);
-      if (matchingButton) {
-        matchingButton.forEach((btn) => btn.classList.remove("clicked"));
-      }
 
       liftPosition[index].isOperatingDoor = true;
       doorDiv.classList.add("open-door");
       setTimeout(() => {
+        if (matchingButton.length > 0)
+          matchingButton.forEach((btn) => btn.classList.remove("clicked"));
+      }, 2000);
+
+      setTimeout(() => {
         doorDiv.classList.remove("open-door");
         doorDiv.classList.add("close-door");
         liftPosition[index].isOperatingDoor = false;
+        liftRequestDirections[floor] = liftRequestDirections[floor].filter(
+          (dir) => dir !== direction
+        );
       }, 2500);
+
       doorDiv.classList.remove("close-door");
-      liftRequestDirections[floor] = liftRequestDirections[floor].filter(
-        (dir) => dir !== direction
-      );
     }
   } else if (diff > 0) {
-    //lift needs to go down
-
+    //   //lift needs to go down
     for (let row = liftFloor; row >= floor; row--) {
       const key = `${row},${index}`;
       const cell = liftMap.get(key);
@@ -326,8 +328,7 @@ const processLiftRequests = (direction) => {
       }
     }
   } else {
-    // Lift needs to go up
-    // console.log("going up");
+    //   // Lift needs to go up
     let floorWithLift = true;
     for (let row = liftFloor; row <= floor; row++) {
       const key = `${row},${index}`;
@@ -355,6 +356,7 @@ const processLiftRequests = (direction) => {
   }
 
   liftRequests.shift();
+  // console.log("shifted", liftRequests);
 };
 
 const createUpDownButton = (tr, i) => {
@@ -373,8 +375,12 @@ const createUpDownButton = (tr, i) => {
     up.value = i;
     td.append(up);
     up.addEventListener("click", () => {
-      up.classList.add("clicked");
-      getLiftToFloor(up.value, "up");
+      // console.log('clicked')
+      if (!up.classList.value.split(" ").includes("clicked")) {
+        // console.log('click not present')
+        up.classList.add("clicked");
+        getLiftToFloor(up.value, "up");
+      }
     });
   }
   if (i > 0 && liftCount.value > 0) {
@@ -385,8 +391,10 @@ const createUpDownButton = (tr, i) => {
     down.value = i;
     td.append(down);
     down.addEventListener("click", () => {
-      down.classList.add("clicked");
-      getLiftToFloor(down.value, "down");
+      if (!down.classList.value.split(" ").includes("clicked")) {
+        down.classList.add("clicked");
+        getLiftToFloor(down.value, "down");
+      }
     });
   }
   tr.append(td);
