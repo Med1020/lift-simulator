@@ -73,7 +73,7 @@ const findClosestLift = (floor) => {
 
   // console.log("checking ismoving", closest);
   arr.forEach((a, ind) => {
-    if (!a.isMoving) {
+    if (!a.isMoving && !a.isOperatingDoor) {
       if (!found || Math.abs(closest[0]) > Math.abs(a.position)) {
         closest = [a.position, ind];
         found = true;
@@ -159,7 +159,6 @@ const animateLiftGoingUp = (
           doorDiv.classList.add("close-door");
           setTimeout(() => {
             liftPosition[index].isOperatingDoor = false;
-            liftPosition[index].targetFloor = null;
             liftRequestDirections[floor] = liftRequestDirections[floor]
               ? liftRequestDirections[floor].filter((dir) => dir !== direction)
               : [];
@@ -255,8 +254,11 @@ const processLiftRequests = (direction) => {
   //   console.log(direction, liftRequests);
   if (liftRequests.length === 0) return;
   const floor = liftRequests[0];
-  const availableLifts = liftPosition.filter((lp) => !lp.isMoving);
+  const availableLifts = liftPosition.filter(
+    (lp) => !lp.isMoving && !lp.isOperatingDoor
+  );
 
+  // console.log(availableLifts);
   if (availableLifts.length === 0) {
     // All lifts are moving, try again later
     setTimeout(() => processLiftRequests(direction), 1000);
@@ -266,30 +268,23 @@ const processLiftRequests = (direction) => {
   // console.log(findClosestLift(floor));
   const [diff, index] = findClosestLift(floor);
 
-  if (liftPosition[index].isOperatingDoor) {
-    setTimeout(() => {
-      // console.log(direction);
-      processLiftRequests(direction);
-    }, 1000);
-    return;
-  }
-
   // console.log("diff,index", diff, index);
   let matchingButton = getMatchingButton(floor, direction); //get the button pressed to style it
   const liftFloor = liftPosition[index].position;
   // console.log(liftRequests);
 
   if (diff === 0) {
-    //   // console.log(liftRequestDirections);
+    // console.log(liftRequestDirections);
     const key = `${floor},${index}`;
     const cell = liftMap.get(key);
     if (cell) {
       // console.log("inside", cell);
       const liftDiv = cell.children[0];
       const doorDiv = liftDiv.children[0];
-      console.log(direction, matchingButton);
+      // console.log(direction, matchingButton);
 
       liftPosition[index].isOperatingDoor = true;
+      // console.log(liftPosition);
       doorDiv.classList.add("open-door");
       setTimeout(() => {
         if (matchingButton.length > 0)
