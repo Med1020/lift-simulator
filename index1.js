@@ -4,6 +4,7 @@ const enterBtn = document.getElementById("enter");
 let table = document.querySelector("#table tbody");
 const grass = document.getElementById("grass");
 const building = document.querySelector(".building");
+const error = document.querySelector(".error");
 
 let allLifts = null; //gets set to nodeslist with lift-container class
 const liftMap = new Map();
@@ -36,16 +37,21 @@ const setLiftRequestsDirections = () => {
   liftRequestDirections = {};
 };
 
+function setError(message) {
+  error.innerHTML = message;
+  setTimeout(() => {
+    error.innerHTML = "";
+  }, 5000);
+}
 function enforceMinMax(el) {
   if (el.value != "") {
     if (parseInt(el.value) < parseInt(el.min)) {
-      el.value = el.min;
-    }
-    if (parseInt(el.value) > parseInt(el.max)) {
-      el.value = el.max;
+      el.value = "";
+      setError("input can't be negative!");
     }
   } else {
-    el.value = el.min;
+    el.value = "";
+    setError("input can't be e!");
   }
 }
 

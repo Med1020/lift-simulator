@@ -151,6 +151,11 @@ button:hover {
   width: 100%;
 }
 
+.error {
+  padding-left: 20px;
+  color: red;
+}
+
 .lift-in-floor {
   /* background-color: gray; */
   background: linear-gradient(
