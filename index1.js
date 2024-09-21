@@ -36,27 +36,29 @@ const setLiftRequestsDirections = () => {
   liftRequestDirections = {};
 };
 
-floorCount.addEventListener("input", (e) => {
-  e.preventDefault();
+function enforceMinMax(el) {
+  if (el.value != "") {
+    if (parseInt(el.value) < parseInt(el.min)) {
+      el.value = el.min;
+    }
+    if (parseInt(el.value) > parseInt(el.max)) {
+      el.value = el.max;
+    }
+  } else {
+    el.value = el.min;
+  }
+}
 
+enterBtn.addEventListener("click", (e) => {
+  e.preventDefault();
   if (+liftCount.value > 10 || +floorCount.value > 10) {
     building.classList.add("zoom");
   } else {
     building.classList.remove("zoom");
   }
-  enterBtn.click();
-});
+  enforceMinMax(liftCount);
+  enforceMinMax(floorCount);
 
-liftCount.addEventListener("input", (e) => {
-  e.preventDefault();
-  if (+liftCount.value > 10 || +floorCount.value > 10) {
-    building.classList.add("zoom");
-  }
-  enterBtn.click();
-});
-
-enterBtn.addEventListener("click", (e) => {
-  e.preventDefault();
   createBuilding();
   getAllLifts();
   setLiftPosition();
